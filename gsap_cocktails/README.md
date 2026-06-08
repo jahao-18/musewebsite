@@ -8,128 +8,172 @@
    <div>
     <img src="https://img.shields.io/badge/-React-61DAFB?style=for-the-badge&logo=react&logoColor=black" />
     <img src="https://img.shields.io/badge/-GSAP-88CE02?style=for-the-badge&logo=greensock&logoColor=white" />
-    <img src="https://img.shields.io/badge/-Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" />
+    <img src="https://img.shields.io/badge/-Tailwind-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" />
     <img src="https://img.shields.io/badge/-FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
     <img src="https://img.shields.io/badge/-DeepSeek-4D6BFE?style=for-the-badge&logo=openai&logoColor=white" />
+    <img src="https://img.shields.io/badge/-Jieba-FF6B35?style=for-the-badge&logo=python&logoColor=white" />
   </div>
 
-  <h3 align="center">MusAgent — 多智能体文学与艺术灵感生成平台</h3>
-
-   <div align="center">
-     7 个专业 NLP Agent 协同工作，从意图识别到文本润色，从情感分析到风格匹配。每一次创作都是一场跨越文学与艺术的智能协作。
-    </div>
+  <h3 align="center">8 个 NLP Agent 协同 · 5320 首诗歌知识库 · DeepSeek LLM 生成</h3>
 </div>
 
-## 📋 <a name="table">Table of Contents</a>
+---
 
-1. 🤖 [Introduction](#introduction)
-2. ⚙️ [Tech Stack](#tech-stack)
-3. 🔋 [Features](#features)
-4. 🤸 [Quick Start](#quick-start)
-5. 🔗 [Assets](#links)
-6. 🚀 [More](#more)
+## 📖 简介
 
-## 🚨 Tutorial
+MusAgent 是一个基于多智能体（Multi-Agent）协作的文学与艺术灵感生成平台。输入一个主题或情绪，系统调用 8 个 NLP Agent 依次完成分词、关键词提取、情感分析、相似度检索、RAG 知识增强等步骤，最终由**算法模板**和 **DeepSeek LLM** 双通道生成诗歌或散文，并以双栏对比方式呈现。
 
-This repository contains the code corresponding to an in-depth tutorial available on our YouTube channel, <a href="https://www.youtube.com/@javascriptmastery/videos" target="_blank"><b>JavaScript Mastery</b></a>.
+平台还内置了**灵感菌**对话机器人——一个基于 DeepSeek 的情绪感知助手，可倾听用户心声、引导情绪、激发创作灵感。
 
-If you prefer visual learning, this is the perfect resource for you. Follow our tutorial to learn how to build projects like these step-by-step in a beginner-friendly manner!
+---
 
-<a href="https://www.youtube.com/watch?v=AW1yfBKRMKc" target="_blank"><img src="https://github.com/sujatagunale/EasyRead/assets/151519281/1736fca5-a031-4854-8c09-bc110e3bc16d" /></a>
+## 🧠 NLP Pipeline
 
-## <a name="introduction">🤖 Introduction</a>
-
-Build and deploy a stunning GSAP-powered cocktail website using React and Tailwind CSS—a modern, scroll-driven experience packed with advanced animations. Bring your design to life with dynamic SplitText reveals, smooth parallax scrolling, and scroll-triggered effects using GSAP’s ScrollTrigger. Lock sections in place with pinned animations, sync video playback to scroll position for cinematic storytelling, and enhance visual impact with scroll-based image masking. Create a custom animated carousel, craft seamless timeline animations across sections, and ensure a fully responsive UI that adapts beautifully across all screen sizes.
-
-
-If you're getting started and need assistance or face any bugs, join our active Discord community with over **50k+** members. It's a place where people help each other out.
-
-<a href="https://discord.com/invite/n6EdbFJ" target="_blank"><img src="https://github.com/sujatagunale/EasyRead/assets/151519281/618f4872-1e10-42da-8213-1d69e486d02e" /></a>
-
-## <a name="tech-stack">⚙️ Tech Stack</a>
-
-
-- **[GSAP](https://gsap.com/)** is a powerful JavaScript animation library used in this project to create dynamic, scroll-driven visuals. Features include SplitText animations for bold text reveals, ScrollTrigger for timeline control, parallax scrolling, pinned sections, scroll-synced video playback, seamless multi-section timelines, image masking effects, and a fully custom animated carousel.
-
-- **[React](https://react.dev/)** is a declarative JavaScript library for building interactive UIs. It provides the component structure for modular development, allowing smooth integration of GSAP animations, reusable logic for scroll behavior, and support for responsive layout and state-driven UI features like carousels and video sections.
-
-- **[Tailwind CSS](https://tailwindcss.com/)** is a utility-first CSS framework that allows developers to design custom user interfaces by applying low-level utility classes directly in HTML, streamlining the design process.
-
-- **[Vite](https://vitejs.dev/)** is a lightning-fast build tool and development server that powers this project’s workflow. It enables instant hot module replacement, fast startup, and optimized production builds—ideal for an animation-heavy React site with smooth, real-time development feedback and minimal config.
-
-## <a name="features">🔋 Features</a>
-
-👉 **SplitText Animations**: Create impactful text reveals using GSAP’s SplitText for dynamic intros and section highlights.
-
-👉 **ScrollTrigger Effects**: Power scroll-based animations and timeline control with GSAP’s ScrollTrigger.
-
-👉 **Parallax Scrolling**: Add immersive depth with smooth parallax effects that respond to user scroll.
-
-👉 **Pinned Sections**: Lock sections in view while animating content for engaging scroll experiences.
-
-👉 **Scroll-Synced Video Playback**: Sync video progress with scroll position for cinematic storytelling.
-
-👉 **Image Masking Effects**: Use scroll-triggered pins and masks for visually striking image transitions.
-
-👉 **Custom Carousel**: Build a fully customized carousel with multiple navigation options and animated slides.
-
-👉 **Seamless Timeline Animations**: Craft smooth animation timelines that span across multiple sections.
-
-👉 **Responsive Design**: Ensure fluid UI and adaptive GSAP animations across all screen sizes.
-
-And many more, including enhanced security and optimized video performance!
-
-
-## <a name="quick-start">🤸 Quick Start</a>
-
-Follow these steps to set up the project locally on your machine.
-
-**Prerequisites**
-
-Make sure you have the following installed on your machine:
-
-- [Git](https://git-scm.com/)
-- [Node.js](https://nodejs.org/en)
-- [npm](https://www.npmjs.com/) (Node Package Manager)
-
-**Cloning the Repository**
-
-```bash
-git clone https://github.com/adrianhajdin/gsap_cocktails.git
-cd gsap_cocktails
+```
+用户输入 → 分词 → TF-IDF → TextRank → 情感分析 → 相似度检索 → RAG → 风格/音乐 → 生成
 ```
 
-**Installation**
+| Agent | 技术 | 说明 |
+|-------|------|------|
+| 📝 WordSegAgent | Jieba + HMM | 中文分词 + 停用词过滤 |
+| 🔑 KeywordAgent | TF-IDF | 词频-逆文档频率关键词提取 Top 10 |
+| 📋 SummaryAgent | TextRank | 基于 PageRank 的句子重要性排序 |
+| 💭 EmotionAgent | 情感词典 | 6 维情感打分（孤独/怀旧/平静/激昂/悲伤/喜悦） |
+| 🔍 RetrievalAgent | TF 余弦相似度 | 从 5320 首诗歌中检索 Top 5 |
+| 📚 RAGAgent | NLP 结构化提取 | 参考诗二次分词→关键词→情感，注入 LLM Prompt |
+| 🎨 StyleMatchAgent | 关键词匹配 | 6 种艺术风格推荐 |
+| ✍️ WriterAgent | DeepSeek LLM | 融合 RAG 上下文的约束生成 + 算法模板降级 |
 
-Install the project dependencies using npm:
+---
+
+## ✨ 功能
+
+- **灵感生成** — 输入主题，选择创作类型、情绪基调、艺术风格，一键生成双版本（⚙️ 算法 + 🤖 LLM）
+- **创作润色** — NLP 分析文本情感与关键词，LLM 优化修辞与表达
+- **知识库** — 5320 首诗歌（现代诗 5000 + 古典诗词 320），情感/类型筛选、关键词搜索、点击展开全文、分页加载
+- **灵感菌对话** — 情绪感知 AI 助手，NLP 分析每条消息的情感与关键词，温暖回应 + 创作启发
+- **Agent 工作流** — 可视化展示 7 步流水线执行过程与关键指标
+- **纯暗色主题** — CSS 变量驱动，无亮色模式
+- **响应式设计** — 手机（≤767px）/ 平板（768-1023px）/ 桌面三断点完美适配
+
+---
+
+## 🚀 快速开始
+
+### 环境要求
+
+| 依赖 | 版本 |
+|------|------|
+| Node.js | ≥ 18 |
+| npm | ≥ 9 |
+| Python | ≥ 3.10 |
+
+### 1. 克隆
 
 ```bash
+git clone https://github.com/liusiqi05/Musagent.git
+cd Musagent
+```
+
+### 2. 安装前端依赖
+
+```bash
+cd gsap_cocktails
 npm install
 ```
 
-**Running the Project**
+### 3. 安装后端依赖
 
 ```bash
+cd ../back
+pip install fastapi uvicorn jieba numpy openai pydantic
+```
+
+### 4. 配置 DeepSeek API Key
+
+```powershell
+# Windows PowerShell
+$env:DEEPSEEK_API_KEY="sk-your-api-key-here"
+
+# macOS / Linux
+export DEEPSEEK_API_KEY="sk-your-api-key-here"
+```
+
+> ⚠️ 不设置 API Key 时，LLM 生成自动降级为算法模板。
+
+### 5. 启动
+
+```bash
+# 终端 1：后端
+cd back
+python -m uvicorn main:app --host 0.0.0.0 --port 8000
+
+# 终端 2：前端
+cd gsap_cocktails
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173) in your browser to view the project.
+打开 [http://localhost:5173](http://localhost:5173)
 
-## <a name="links">🔗 Assets</a>
+---
 
-Assets and snippets used in the project can be found in the **[Video Kit](https://jsm.dev/cocktail-kit)**.
+## 📁 项目结构
 
-<a href="https://jsm.dev/cocktail-kit" target="_blank">
-  <img src="public/readme/videokit.png" alt="Video Kit Banner">
-</a>
+```
+Musagent/
+├── gsap_cocktails/          # 前端 (React 19 + Vite 6)
+│   ├── src/
+│   │   ├── components/      # Hero / Navbar / Cocktails / About / Art / Menu / Contact
+│   │   ├── pages/           # 灵感生成 / 知识库 / Agent工作流 / 创作润色
+│   │   ├── nlp/             # API 客户端 + Pipeline 调度
+│   │   ├── data/            # poems_extracted.json（5320 首诗歌, 2.6MB）
+│   │   └── index.css        # 全局样式 + 响应式媒体查询
+│   └── public/              # 静态资源（图片、字体、视频）
+└── back/                    # 后端 (FastAPI)
+    ├── main.py              # API 路由 + DeepSeek 集成
+    └── nlp_engine.py        # NLP 引擎（分词/TF-IDF/TextRank/情感/检索）
+```
 
-## <a name="more">🚀 More</a>
+---
 
-**Advance your skills with Next.js Pro Course**
+## 🔌 API
 
-Enjoyed creating this project? Dive deeper into our PRO courses for a richer learning adventure. They're packed with
-detailed explanations, cool features, and exercises to boost your skills. Give it a go!
+| 方法 | 路径 | 说明 |
+|------|------|------|
+| `GET` | `/api/health` | 健康检查 |
+| `POST` | `/api/pipeline` | 完整流水线 `{topic, creationType, emotionTone, artStyle}` |
+| `POST` | `/api/chat` | 灵感对话 `{message, history}` |
+| `POST` | `/api/segment` | 分词 `{text}` |
+| `POST` | `/api/keywords` | 关键词 `{words}` |
+| `POST` | `/api/sentiment` | 情感分析 `{words}` |
+| `POST` | `/api/retrieve` | 相似度检索 `{words, creationType}` |
 
-<a href="https://jsm.dev/cocktail-nextjs" target="_blank">
-  <img src="public/readme/jsmpro.png" alt="Project Banner">
-</a>
+---
+
+## 🛠 技术栈
+
+| 层级 | 技术 |
+|------|------|
+| 前端 | React 19 · Vite 6 · Tailwind CSS 4 · GSAP |
+| 后端 | FastAPI · Uvicorn · Pydantic |
+| NLP | Jieba · NumPy · TF-IDF · TextRank · 情感词典 |
+| AI | DeepSeek (deepseek-chat) · OpenAI SDK |
+| 数据 | 5320 首诗歌 JSON |
+
+---
+
+## 🌐 页面
+
+| 路径 | 功能 |
+|------|------|
+| `/` | 首页 |
+| `/cocktails` | 灵感生成工作台 + 灵感菌对话 |
+| `/menu` | 知识库（分页浏览） |
+| `/about` | Agent 工作流展示 |
+| `/contact` | 创作润色 |
+
+---
+
+## 📄 详细文档
+
+参见 [PROJECT.md](PROJECT.md) — 包含完整算法原理、数学公式、数据流图和部署说明。
