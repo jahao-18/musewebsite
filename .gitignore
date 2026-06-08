@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+gsap_cocktails/dist/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+back/__pycache__/
+
+# VS Code local history (contains API keys in old code)
+.history/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
