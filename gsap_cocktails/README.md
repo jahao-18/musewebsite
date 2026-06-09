@@ -78,7 +78,7 @@ cd Musagent
 ### 2. 安装前端依赖
 
 ```bash
-cd gsap_cocktails
+cd musagent
 npm install
 ```
 
@@ -109,7 +109,7 @@ cd back
 python -m uvicorn main:app --host 0.0.0.0 --port 8000
 
 # 终端 2：前端
-cd gsap_cocktails
+cd musagent
 npm run dev
 ```
 
@@ -121,7 +121,7 @@ npm run dev
 
 ```
 Musagent/
-├── gsap_cocktails/          # 前端 (React 19 + Vite 6)
+├── musagent/               # 前端 (React 19 + Vite 6)
 │   ├── src/
 │   │   ├── components/      # Hero / Navbar / Cocktails / About / Art / Menu / Contact
 │   │   ├── pages/           # 灵感生成 / 知识库 / Agent工作流 / 创作润色

@@ -15,7 +15,7 @@ def _load_poems():
     global _poems_cache
     if _poems_cache is not None:
         return _poems_cache
-    path = os.path.join(os.path.dirname(__file__), '..', 'gsap_cocktails', 'src', 'data', 'poems_extracted.json')
+    path = os.path.join(os.path.dirname(__file__), '..', 'musagent', 'src', 'data', 'poems_extracted.json')
     with open(path, 'r', encoding='utf-8') as f:
         data = json.load(f)
     _poems_cache = data
