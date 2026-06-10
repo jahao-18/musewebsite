@@ -3,15 +3,15 @@ MusAgent 后端 — FastAPI + DeepSeek LLM
 启动: uvicorn main:app --reload --port 8000
 """
 import os
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from typing import Optional
 from openai import OpenAI
 
 from nlp_engine import (
     segment, extract_keywords, summarize, analyze_sentiment,
-    retrieve_similar, match_art_style, match_music,
+    retrieve_similar, match_art_style, match_music, expand_query,
+    get_knowledge_page,
 )
 
 app = FastAPI(title="MusAgent API", version="1.0")
@@ -35,14 +35,25 @@ class PipelineRequest(BaseModel):
     emotionTone: str = "孤独"
     artStyle: str = "赛博朋克"
     useLLM: bool = False  # 是否使用 DeepSeek 生成
+    lengthPreference: str = "中"
+    languageStyle: str = "清新"
+    rhymeLevel: str = "自由"
+    abstractionLevel: str = "平衡"
 
-class GenerateRequest(BaseModel):
-    topic: str
-    creationType: str
-    emotion: str
-    artStyle: str
-    keywords: list
-    refPoems: list  # 检索到的参考诗歌
+class RegenerateRequest(BaseModel):
+    input: PipelineRequest
+    keywords: list = []
+    similarWorks: list = []
+    ragResults: list = []
+    emotion: dict = {}
+    artStyles: list = []
+    music: dict = {}
+
+class PolishRequest(BaseModel):
+    text: str
+    targetStyle: str = "文学化"
+    preserveMeaning: bool = True
+    useLLM: bool = True
 
 # ===== API 路由 =====
 @app.get("/api/health")
@@ -70,23 +81,34 @@ def api_retrieve(req: dict):
     creation_type = req.get("creationType", "all")
     return {"results": retrieve_similar(words, creation_type, 5)}
 
+@app.get("/api/knowledge")
+def api_knowledge(
+    page: int = 1,
+    pageSize: int = 30,
+    search: str = "",
+    emotion: str = "all",
+    poemType: str = "all",
+):
+    return get_knowledge_page(page, pageSize, search, emotion, poemType)
+
 @app.post("/api/pipeline")
 def run_full_pipeline(req: PipelineRequest):
     """完整流水线：分词 → 关键词 → TextRank → 情感 → 检索 → RAG → 生成"""
     # Step 1: 分词
     seg = segment(req.topic)
+    expanded_query = expand_query(req.topic, seg["words"])
 
     # Step 2: 关键词
-    kw = extract_keywords(seg["words"], 10)
+    kw = extract_keywords(expanded_query["expanded"], 10, seg["words"])
 
     # Step 3: TextRank 摘要（不再限制长度，始终运行）
     summary = summarize(req.topic)
 
-    # Step 4: 情感
-    emotion = analyze_sentiment(seg["words"])
+    # Step 4: 相似度检索
+    similar = retrieve_similar(expanded_query["expanded"], req.creationType, 5)
 
-    # Step 5: 相似度检索
-    similar = retrieve_similar(seg["words"], req.creationType, 5)
+    # Step 5: 情感（输入直匹配 + 相似作品兜底推断）
+    emotion = analyze_sentiment(expanded_query["expanded"], similar)
 
     # Step 6: RAG — 对每首参考诗做 NLP 提取关键信息
     rag_results = []
@@ -110,11 +132,19 @@ def run_full_pipeline(req: PipelineRequest):
 
     # Step 8: 生成（同时产出算法模板 + LLM 两种结果）
     gen_template = template_generate(req, kw, similar, emotion["dominant"], art[0], music)
-    gen_llm = llm_generate(req, kw, similar, emotion["dominant"], art[0], music, rag_results)
+    if req.useLLM:
+        gen_llm = llm_generate(req, kw, similar, emotion["dominant"], art[0], music, rag_results)
+    else:
+        gen_llm = {
+            **gen_template,
+            "method": "未启用 LLM，使用算法模板",
+            "note": "请求 useLLM=false，已跳过 DeepSeek 调用",
+        }
 
     return {
         "input": req.model_dump(),
         "segmentation": seg,
+        "queryExpansion": expanded_query,
         "keywords": kw,
         "summary": summary["summary"],
         "emotion": emotion,
@@ -127,11 +157,170 @@ def run_full_pipeline(req: PipelineRequest):
         "generatedLLM": gen_llm,
     }
 
+@app.post("/api/regenerate")
+def regenerate_from_context(req: RegenerateRequest):
+    """沿用已有分析结果，仅重新执行 WriterAgent。"""
+    emotion_name = req.emotion.get("dominant", req.input.emotionTone)
+    art = req.artStyles[0] if req.artStyles else {"name": req.input.artStyle, "keywords": []}
+    music = req.music or {"mood": emotion_name, "genre": "", "desc": ""}
+    gen_template = template_generate(req.input, req.keywords, req.similarWorks, emotion_name, art, music)
+    if req.input.useLLM:
+        gen_llm = llm_generate(req.input, req.keywords, req.similarWorks, emotion_name, art, music, req.ragResults)
+    else:
+        gen_llm = {
+            **gen_template,
+            "method": "未启用 LLM，使用算法模板",
+            "note": "请求 useLLM=false，已跳过 DeepSeek 调用",
+        }
+    return {"generated": gen_template, "generatedLLM": gen_llm}
+
+@app.post("/api/polish")
+def polish_text(req: PolishRequest):
+    """创作润色：保留原意，输出诊断、建议、保守润色和风格化润色。"""
+    text = req.text.strip()
+    if not text:
+        return {
+            "input": req.model_dump(),
+            "segmentation": {"words": [], "freq": {}, "total": 0},
+            "keywords": [],
+            "summary": "",
+            "emotion": {"dominant": "未知", "scores": {}, "intensity": 0},
+            "diagnosis": [],
+            "suggestions": ["请输入需要润色的文本。"],
+            "conservative": "",
+            "creative": "",
+            "method": "空输入",
+            "llmUsed": False,
+        }
+
+    seg = segment(text)
+    kw = extract_keywords(seg["words"], 8)
+    summary = summarize(text)
+    emotion = analyze_sentiment(seg["words"])
+    diagnosis = build_polish_diagnosis(text, kw, emotion, summary["summary"])
+    suggestions = build_polish_suggestions(text, kw, emotion)
+    fallback = fallback_polish(text, kw, emotion)
+    llm_result = None
+
+    if req.useLLM:
+        llm_result = llm_polish(text, req.targetStyle, req.preserveMeaning, kw, emotion, diagnosis, suggestions)
+
+    return {
+        "input": req.model_dump(),
+        "segmentation": seg,
+        "keywords": kw,
+        "summary": summary["summary"],
+        "emotion": emotion,
+        "diagnosis": diagnosis,
+        "suggestions": suggestions,
+        "conservative": (llm_result or {}).get("conservative") or fallback["conservative"],
+        "creative": (llm_result or {}).get("creative") or fallback["creative"],
+        "method": (llm_result or {}).get("method") or fallback["method"],
+        "llmUsed": bool(llm_result),
+        "note": (llm_result or {}).get("note") or fallback["note"],
+    }
+
 # ===== 意图分类 =====
 def classify_intent(topic: str, creation_type: str) -> dict:
     intent_map = {"现代诗":"诗歌创作","古典诗":"诗歌创作","散文":"散文创作","短篇片段":"小说创作"}
     intent = intent_map.get(creation_type, "诗歌创作")
     return {"intent": intent, "confidence": {"诗歌创作": 0.8}}
+
+def _emotion_strength_label(intensity: float) -> str:
+    if intensity >= 0.5:
+        return "情绪线索明显"
+    if intensity >= 0.2:
+        return "情绪线索中等"
+    if intensity > 0:
+        return "情绪线索较弱"
+    return "情绪线索不明显"
+
+def build_polish_diagnosis(text: str, keywords: list, emotion: dict, summary_text: str) -> list:
+    top_kw = [k["keyword"] for k in keywords[:5]]
+    diagnosis = [
+        f"核心意象集中在「{'、'.join(top_kw) if top_kw else '暂无明显关键词'}」。",
+        f"主导情绪为「{emotion.get('dominant', '未知')}」，{_emotion_strength_label(emotion.get('intensity', 0))}。",
+    ]
+    if summary_text and summary_text != text:
+        diagnosis.append(f"文本中心句可概括为：{summary_text}")
+    if len(text) < 30:
+        diagnosis.append("文本较短，适合优先增强画面细节和动词力度。")
+    elif len(text) > 220:
+        diagnosis.append("文本较长，适合压缩重复表达并强化段落节奏。")
+    if "，" not in text and "。" not in text and "\n" not in text:
+        diagnosis.append("当前断句较少，可以通过停顿制造节奏层次。")
+    return diagnosis
+
+def build_polish_suggestions(text: str, keywords: list, emotion: dict) -> list:
+    top_kw = [k["keyword"] for k in keywords[:4]]
+    suggestions = []
+    if top_kw:
+        suggestions.append(f"保留「{'、'.join(top_kw[:3])}」等核心意象，避免润色时换掉文本的识别点。")
+    suggestions.append("优先替换泛化形容词，改用具体动作、触感、光线或声音。")
+    suggestions.append("检查每个比喻是否服务同一情绪，不要让意象互相抢焦点。")
+    if emotion.get("intensity", 0) < 0.2:
+        suggestions.append("当前情绪信号偏弱，可以增加一句带有明确态度或感受的收束句。")
+    else:
+        suggestions.append(f"围绕「{emotion.get('dominant', '情绪')}」强化节奏，避免语气突然转向。")
+    return suggestions[:4]
+
+def fallback_polish(text: str, keywords: list, emotion: dict) -> dict:
+    top_kw = [k["keyword"] for k in keywords[:3]]
+    anchor = "、".join(top_kw) if top_kw else "原有意象"
+    conservative = text.replace("很长很长", "拖得更长").strip()
+    creative = f"{text.strip()}\n\n{emotion.get('dominant', '某种情绪')}在{anchor}之间缓慢显影，像一束光穿过尚未命名的缝隙。"
+    return {
+        "method": "算法润色建议",
+        "conservative": conservative,
+        "creative": creative,
+        "note": "DeepSeek 不可用或未启用时返回规则化润色结果。",
+    }
+
+def llm_polish(text: str, target_style: str, preserve_meaning: bool, keywords: list, emotion: dict, diagnosis: list, suggestions: list):
+    top_kw = [k["keyword"] for k in keywords[:5]]
+    prompt = f"""请润色下面这段中文创作文本。
+
+原文：
+{text}
+
+目标风格：{target_style}
+是否保留原意：{"必须保留原意" if preserve_meaning else "允许较大幅度改写"}
+关键词：{'、'.join(top_kw)}
+主导情绪：{emotion.get('dominant', '未知')}
+诊断：{'；'.join(diagnosis)}
+建议：{'；'.join(suggestions)}
+
+请严格按以下格式输出，不要添加额外解释：
+[保守润色]
+在这里输出，尽量保留原文结构和意思。
+
+[风格化润色]
+在这里输出，可以更文学化，但不要偏离原文核心意象。
+"""
+    try:
+        resp = llm_client.chat.completions.create(
+            model="deepseek-chat",
+            messages=[
+                {"role": "system", "content": "你是一位中文文学编辑，擅长保留原意的文本润色、节奏优化和意象增强。"},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.65,
+            max_tokens=650,
+        )
+        content = resp.choices[0].message.content.strip()
+        conservative = content
+        creative = content
+        if "[保守润色]" in content and "[风格化润色]" in content:
+            conservative = content.split("[保守润色]", 1)[1].split("[风格化润色]", 1)[0].strip()
+            creative = content.split("[风格化润色]", 1)[1].strip()
+        return {
+            "method": "DeepSeek 文学润色",
+            "conservative": conservative,
+            "creative": creative,
+            "note": "模型：deepseek-chat | 任务：保留原意 + 风格化润色",
+        }
+    except Exception:
+        return None
 
 # ===== 文本生成 =====
 def template_generate(req: PipelineRequest, keywords: list, similar: list, emotion: str, art: dict, music: dict):
@@ -157,7 +346,7 @@ def template_generate(req: PipelineRequest, keywords: list, similar: list, emoti
     return {
         "method": "算法模板生成",
         "content": content,
-        "note": f"意象：{'、'.join(top_kw)} | 参考：《{ref_title}》| 风格：{art['name']} | 音乐：{music['genre']}",
+        "note": f"意象：{'、'.join(top_kw)} | 参考：《{ref_title}》| 风格：{art['name']} | 偏好：{req.lengthPreference}/{req.languageStyle}/{req.rhymeLevel}/{req.abstractionLevel} | 音乐：{music['genre']}",
     }
 
 def llm_generate(req: PipelineRequest, keywords: list, similar: list, emotion: str, art: dict, music: dict, rag_results: list = None):
@@ -186,6 +375,7 @@ def llm_generate(req: PipelineRequest, keywords: list, similar: list, emotion: s
 用户情感基调：{emotion}
 用户输入关键词：{'、'.join(top_kw)}
 目标艺术风格：{art['name']}
+创作偏好：篇幅{req.lengthPreference}，语言风格{req.languageStyle}，押韵程度{req.rhymeLevel}，抽象程度{req.abstractionLevel}
 
 ════════ 知识库 RAG 参考 ════════
 以下是通过 NLP 分析从知识库中检索到的相似诗歌的结构化信息，请参考其意象、情感和风格：
@@ -197,13 +387,14 @@ def llm_generate(req: PipelineRequest, keywords: list, similar: list, emotion: s
 2. 融合上述参考诗歌的核心意象与情感质感
 3. 保留用户关键词"{'、'.join(top_kw[:3])}"但用自己的方式重新演绎
 4. 体现{emotion}的情感氛围和{art['name']}的风格
-5. 直接输出诗歌，不加标题和解释""",
+5. 遵守创作偏好，直接输出诗歌，不加标题和解释""",
 
         "古典诗": f"""请创作一首七言绝句/律诗，主题：「{req.topic}」。
 
 情感：{emotion}
 参考意象：{'、'.join(top_kw)}
 风格：{art['name']}
+创作偏好：篇幅{req.lengthPreference}，语言风格{req.languageStyle}，押韵程度{req.rhymeLevel}，抽象程度{req.abstractionLevel}
 
 ════════ 知识库 RAG 参考 ════════
 {rag_context if rag_context else refs}
@@ -219,6 +410,7 @@ def llm_generate(req: PipelineRequest, keywords: list, similar: list, emotion: s
 
 情感：{emotion}
 参考：《{similar[0]['title'] if similar else '未知作品'}》
+创作偏好：篇幅{req.lengthPreference}，语言风格{req.languageStyle}，抽象程度{req.abstractionLevel}
 
 ════════ 知识库 RAG 参考 ════════
 {rag_context if rag_context else refs}
@@ -230,6 +422,7 @@ def llm_generate(req: PipelineRequest, keywords: list, similar: list, emotion: s
 
 情感：{emotion}
 意象：{'、'.join(top_kw)}
+创作偏好：篇幅{req.lengthPreference}，语言风格{req.languageStyle}，抽象程度{req.abstractionLevel}
 
 参考作品：
 {rag_context if rag_context else refs}

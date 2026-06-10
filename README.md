@@ -39,7 +39,7 @@ MusAgent 是一个基于多智能体（Multi-Agent）协作的文学与艺术灵
 | 🔑 KeywordAgent | TF-IDF | 词频-逆文档频率关键词提取 Top 10 |
 | 📋 SummaryAgent | TextRank | 基于 PageRank 的句子重要性排序 |
 | 💭 EmotionAgent | 情感词典 | 6 维情感打分（孤独/怀旧/平静/激昂/悲伤/喜悦） |
-| 🔍 RetrievalAgent | TF 余弦相似度 | 从 5320 首诗歌中检索 Top 5 |
+| 🔍 RetrievalAgent | BM25 | 从 5320 首诗歌中检索 Top 5，并返回命中词 |
 | 📚 RAGAgent | NLP 结构化提取 | 参考诗二次分词→关键词→情感，注入 LLM Prompt |
 | 🎨 StyleMatchAgent | 关键词匹配 | 6 种艺术风格推荐 |
 | ✍️ WriterAgent | DeepSeek LLM | 融合 RAG 上下文的约束生成 + 算法模板降级 |
@@ -49,10 +49,10 @@ MusAgent 是一个基于多智能体（Multi-Agent）协作的文学与艺术灵
 ## ✨ 功能
 
 - **灵感生成** — 输入主题，选择创作类型、情绪基调、艺术风格，一键生成双版本（⚙️ 算法 + 🤖 LLM）
-- **创作润色** — NLP 分析文本情感与关键词，LLM 优化修辞与表达
+- **创作润色** — 原文诊断、修改建议、保守润色版与风格化润色版
 - **知识库** — 5320 首诗歌（现代诗 5000 + 古典诗词 320），情感/类型筛选、关键词搜索、点击展开全文、分页加载
 - **灵感菌对话** — 情绪感知 AI 助手，NLP 分析每条消息的情感与关键词，温暖回应 + 创作启发
-- **Agent 工作流** — 可视化展示 7 步流水线执行过程与关键指标
+- **Agent 工作流** — 展示多 Agent 架构、输入输出和处理职责
 - **纯暗色主题** — CSS 变量驱动，无亮色模式
 - **响应式设计** — 手机（≤767px）/ 平板（768-1023px）/ 桌面三断点完美适配
 
@@ -78,7 +78,7 @@ cd Musagent
 ### 2. 安装前端依赖
 
 ```bash
-cd gsap_cocktails
+cd musagent
 npm install
 ```
 
@@ -109,7 +109,7 @@ cd back
 python -m uvicorn main:app --host 0.0.0.0 --port 8000
 
 # 终端 2：前端
-cd gsap_cocktails
+cd musagent
 npm run dev
 ```
 
@@ -121,7 +121,7 @@ npm run dev
 
 ```
 Musagent/
-├── gsap_cocktails/          # 前端 (React 19 + Vite 6)
+├── musagent/                # 前端 (React 19 + Vite 6)
 │   ├── src/
 │   │   ├── components/      # Hero / Navbar / Cocktails / About / Art / Menu / Contact
 │   │   ├── pages/           # 灵感生成 / 知识库 / Agent工作流 / 创作润色
@@ -142,6 +142,9 @@ Musagent/
 |------|------|------|
 | `GET` | `/api/health` | 健康检查 |
 | `POST` | `/api/pipeline` | 完整流水线 `{topic, creationType, emotionTone, artStyle}` |
+| `POST` | `/api/regenerate` | 沿用已有分析结果，仅重新生成文本 |
+| `POST` | `/api/polish` | 创作润色 `{text, targetStyle, preserveMeaning}` |
+| `GET` | `/api/knowledge` | 知识库分页、搜索和筛选 |
 | `POST` | `/api/chat` | 灵感对话 `{message, history}` |
 | `POST` | `/api/segment` | 分词 `{text}` |
 | `POST` | `/api/keywords` | 关键词 `{words}` |
